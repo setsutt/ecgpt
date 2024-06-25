@@ -191,7 +191,7 @@ def create_train_and_val_datasets_with_dates(
         raw_dataset = TrainDatasets(metadata=metadata, train=train_ds, test=full_dataset)
 
     elif name in ("16265_0","16272_0", "16273_0","16420_0","16483_0", "16539_0","16773_0","16786_0","16795_0","17052_0","17453_0","18177_0","18184_0","19088_0","19090_0","19093_0","19140_0","19830_0"):
-        path = "datasets/ecg/nsrdb/" + name + ".json"
+        path = "datasets/ecg/1minnsrdb/" + name + ".json"
         with open(path, "r") as f:
             data = json.load(f)
         metadata = MetaData(**data["metadata"])
@@ -200,6 +200,19 @@ def create_train_and_val_datasets_with_dates(
         train_ds = create_train_dataset_without_last_k_timesteps(full_dataset, freq=metadata.freq, k=128)
         raw_dataset = TrainDatasets(metadata=metadata, train=train_ds, test=full_dataset)
 
+    elif name in ("100_0","101_0","102_0","103_0","104_0","105_0","106_0","107_0","108_0","109_0",
+                  "111_0","112_0","113_0","114_0","115_0","116_0","117_0","118_0","119_0",
+                  "121_0","122_0","123_0","124_0",
+                  "200_0","201_0","202_0","203_0","205_0","207_0","208_0","209_0", "210_0","212_0","213_0","214_0","215_0","217_0","119_0",
+                  "220_0","221_0","222_0","223_0","228_0","230_0","231_0","232_0","233_0","234_0",):
+        path = "datasets/ecg/mitdb/" + name + ".json"
+        with open(path, "r") as f:
+            data = json.load(f)
+        metadata = MetaData(**data["metadata"])
+        train_test_data = [x for x in data["data"] if type(x["target"][0]) != str]
+        full_dataset = ListDataset(train_test_data, freq=metadata.freq)
+        train_ds = create_train_dataset_without_last_k_timesteps(full_dataset, freq=metadata.freq, k=24)
+        raw_dataset = TrainDatasets(metadata=metadata, train=train_ds, test=full_dataset)
 
     else:
         raw_dataset = get_dataset(name, path=dataset_path)
@@ -359,8 +372,19 @@ def create_test_dataset(
         train_ds = create_train_dataset_without_last_k_timesteps(full_dataset, freq=metadata.freq, k=128)
         dataset = TrainDatasets(metadata=metadata, train=train_ds, test=full_dataset)
 
-
-
+    elif name in ("100_0","101_0","102_0","103_0","104_0","105_0","106_0","107_0","108_0","109_0",
+                  "111_0","112_0","113_0","114_0","115_0","116_0","117_0","118_0","119_0",
+                  "121_0","122_0","123_0","124_0",
+                  "200_0","201_0","202_0","203_0","205_0","207_0","208_0","209_0", "210_0","212_0","213_0","214_0","215_0","217_0","119_0",
+                  "220_0","221_0","222_0","223_0","228_0","230_0","231_0","232_0","233_0","234_0",):
+        path = "datasets/ecg/mitdb/" + name + ".json"
+        with open(path, "r") as f:
+            data = json.load(f)
+        metadata = MetaData(**data["metadata"])
+        train_test_data = [x for x in data["data"] if type(x["target"][0]) != str]
+        full_dataset = ListDataset(train_test_data, freq=metadata.freq)
+        train_ds = create_train_dataset_without_last_k_timesteps(full_dataset, freq=metadata.freq, k=128)
+        dataset = TrainDatasets(metadata=metadata, train=train_ds, test=full_dataset)
 
 
     else:
