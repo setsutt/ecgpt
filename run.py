@@ -564,7 +564,7 @@ if __name__ == "__main__":
         help="Enter the datasets folder path here"
     )
     parser.add_argument("--all_datasets", type=str, nargs="+", default=ALL_DATASETS)
-    parser.add_argument("-t", "--test_datasets", type=str, nargs="+", default=[])
+    parser.add_argument("-t", "--test_datasets", type=str, nargs="+", default=["100_0"])
     parser.add_argument(
         "--stratified_sampling",
         type=str,
@@ -575,7 +575,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=42)
 
     # Model hyperparameters
-    parser.add_argument("--context_length", type=int, default=1024)
+    parser.add_argument("--context_length", type=int, default=3600)
     parser.add_argument("--prediction_length", type=int, default=256)
     parser.add_argument("--max_prediction_length", type=int, default=1024)
     parser.add_argument("--n_layer", type=int, default=4)
@@ -587,7 +587,7 @@ if __name__ == "__main__":
 
     # Data normalization
     parser.add_argument(
-        "--data_normalization", default=None, choices=["mean", "std", "robust", "none"]
+        "--data_normalization", default="std", choices=["mean", "std", "robust", "none"]
     )
 
     ## Augmentation hyperparameters
