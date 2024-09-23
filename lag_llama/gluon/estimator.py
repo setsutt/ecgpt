@@ -1,16 +1,3 @@
-# Copyright 2024 Arjun Ashok
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
 from typing import Any, Dict, Iterable, Optional
 
@@ -109,7 +96,7 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
         n_layer: int = 1,
         n_embd_per_head: int = 32,
         n_head: int = 4,
-        max_context_length: int = 2560,
+        max_context_length: int = 200,
         rope_scaling=None,
         scaling: Optional[str] = "mean",
         lr: float = 1e-3,
@@ -148,7 +135,7 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
         validation_sampler: Optional[InstanceSampler] = None,
         time_feat: bool = False,
         dropout: float = 0.0,
-        lags_seq: list = ["Q", "M", "W", "D", "H", "T", "S"],
+        lags_seq: list = ["Q", "M"],
         data_id_to_name_map: dict = {},
         use_cosine_annealing_lr: bool = False,
         cosine_annealing_lr_args: dict = {},
@@ -167,18 +154,20 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
         self.prediction_length = prediction_length
         self.context_length = context_length
         self.max_context_length = max_context_length
+        #
+        # lag_indices = []  #初始化滞后索引列表
+        # for freq in lags_seq:#遍历频率序列
+        #     lag_indices.extend(
+        #         get_lags_for_frequency(freq_str=freq, num_default_lags=1)
+        #     )   #获取该频率对应的滞后索引列表
 
-        lag_indices = []
-        for freq in lags_seq:
-            lag_indices.extend(
-                get_lags_for_frequency(freq_str=freq, num_default_lags=1)
-            )
+        # if len(lag_indices):
+        #     self.lags_seq = sorted(set(lag_indices))#排序、去重
+        #     self.lags_seq = [lag_index - 1 for lag_index in self.lags_seq]   #调整索引
+        # else:
+        #     self.lags_seq = [] #如果lag_indices列表为空（即lags_seq没有生成任何滞后索引），则self.lags_seq被设置为空列表。
 
-        if len(lag_indices):
-            self.lags_seq = sorted(set(lag_indices))
-            self.lags_seq = [lag_index - 1 for lag_index in self.lags_seq]
-        else:
-            self.lags_seq = []
+        self.lags_seq = [0]
 
         self.n_head = n_head
         self.n_layer = n_layer
