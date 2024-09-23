@@ -206,7 +206,7 @@ def train(args):
         n_layer=args.n_layer,
         n_embd_per_head=args.n_embd_per_head,
         n_head=args.n_head,
-        max_context_length=2560,
+        max_context_length=256,
         rope_scaling=None, 
         scaling=args.data_normalization, 
         lr=args.lr,
@@ -575,15 +575,15 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=42)
 
     # Model hyperparameters
-    parser.add_argument("--context_length", type=int, default=3807)
-    parser.add_argument("--prediction_length", type=int, default=207)
-    parser.add_argument("--max_prediction_length", type=int, default=207)
+    parser.add_argument("--context_length", type=int, default=400)
+    parser.add_argument("--prediction_length", type=int, default=80)
+    parser.add_argument("--max_prediction_length", type=int, default=80)
     parser.add_argument("--n_layer", type=int, default=4)
-    parser.add_argument("--num_encoder_layer", type=int, default=4, help="Only for lag-transformer")
+    parser.add_argument("--num_encoder_layer", type=int, default=4, help="Only for lag-transformer")#######
     parser.add_argument("--n_embd_per_head", type=int, default=64)
-    parser.add_argument("--n_head", type=int, default=8)
+    parser.add_argument("--n_head", type=int, default=4)
     parser.add_argument("--dim_feedforward", type=int, default=256)
-    parser.add_argument("--lags_seq", type=str, nargs="+", default=["Q", "M", "W", "D", "H", "T", "S"])
+    parser.add_argument("--lags_seq", type=str, nargs="+", default=["Q","M"])
 
     # Data normalization
     parser.add_argument(
@@ -745,7 +745,7 @@ if __name__ == "__main__":
 
     # Training arguments
     parser.add_argument("-b", "--batch_size", type=int, default=64)
-    parser.add_argument("-m", "--max_epochs", type=int, default=1000)
+    parser.add_argument("-m", "--max_epochs", type=int, default=100)
     parser.add_argument("-n", "--num_batches_per_epoch", type=int, default=100)
     parser.add_argument("--limit_val_batches", type=int)
     parser.add_argument("--early_stopping_patience", default=5)
@@ -793,7 +793,7 @@ if __name__ == "__main__":
     )
 
     # Training/validation iterator type switching
-    parser.add_argument("--use_single_instance_sampler", action="store_true", default=True)
+    parser.add_argument("--use_single_instance_sampler", action="store_true", default=False)
 
     # Plot forecasts
     parser.add_argument("--plot_test_forecasts", action="store_true", default=True)
@@ -802,7 +802,7 @@ if __name__ == "__main__":
     parser.add_argument("--search_batch_size", action="store_true", default=False)
 
     # Number of validation windows
-    parser.add_argument("--num_validation_windows", type=int, default=14)
+    parser.add_argument("--num_validation_windows", type=int, default=50)
 
     # Training KWARGS
     parser.add_argument('--lr', type=float, default=1e-3)
