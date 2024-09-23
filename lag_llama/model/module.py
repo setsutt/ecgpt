@@ -1,16 +1,3 @@
-# Copyright 2024 Arjun Ashok
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
 import math
 from dataclasses import dataclass
@@ -407,7 +394,7 @@ class LagLlamaModel(nn.Module):
         distr_output: DistributionOutput,
         rope_scaling=None,
         num_parallel_samples: int = 100,
-        time_feat: bool = True,
+        time_feat: bool = False,#####*****
         dropout: float = 0.0,
     ) -> None:
         super().__init__()
@@ -416,7 +403,9 @@ class LagLlamaModel(nn.Module):
         if time_feat:
             feature_size = input_size * (len(self.lags_seq)) + 2 * input_size + 6
         else:
+            # feature_size =
             feature_size = input_size * (len(self.lags_seq)) + 2 * input_size
+
 
         config = LTSMConfig(
             n_layer=n_layer,
@@ -472,12 +461,21 @@ class LagLlamaModel(nn.Module):
         future_time_feat: Optional[torch.Tensor] = None,
         future_target: Optional[torch.Tensor] = None,
     ):
+        # 使用 self.scaler 方法对 past_target 进行标准化处理，
+        # 同时考虑到 past_observed_values 作为权重（可能是为了处理不同的观测值对目标值的影响程度不同）。
+        # 这里返回三个值：标准化后的过去目标值 scaled_past_target、位置参数 loc（均值）和尺度参数 scale（标准差）。
         scaled_past_target, loc, scale = self.scaler(
             past_target, past_observed_values
         )  # Data is standardized (past_observed_values is passed as "weights" parameter) # (bsz, context_length+max(self.lags_seq)
 
+        # 构建输入数据
+        # 如果没有提供future_target，则只使用标准化后的过去目标值作为输入。
+
         # In the below code, instead of max(self.lags_seq), it was previously -self.context_length
         if future_target is not None:
+        # 如果提供了 future_target（即存在未来的目标值）
+        # 则将标准化后的过去目标值（仅保留 max(self.lags_seq)之后的部分作为上下文）与标准化后的未来目标值
+        # （去除了最后一个值，因为通常不使用它进行预测）进行拼接，作为模型的输入数据。
             input = torch.cat(
                 (
                     scaled_past_target[..., max(self.lags_seq) :],  # Just the context
@@ -487,7 +485,13 @@ class LagLlamaModel(nn.Module):
                 dim=-1,
             )  # Shape is (bsz, context_length+(pred_len-1))
         else:
+            #如果没有提供 future_target，则只使用标准化后的过去目标值作为输入。
             input = scaled_past_target[..., max(self.lags_seq) :]
+        # input = scaled_past_target[..., max(self.lags_seq):]
+
+        # 构建滞后序列：
+        # 使用 lagged_sequence_values 函数根据 self.lags_seq（滞后序列的长度列表）和前面的输入数据（包括可能的未来目标值）构建滞后序列。
+        # 这个滞后序列将作为模型输入的一部分，用于捕捉时间序列数据中的历史依赖关系。
         if (past_time_feat is not None) and (future_time_feat is not None):
             time_feat = (
                 torch.cat(
@@ -509,14 +513,21 @@ class LagLlamaModel(nn.Module):
             self.lags_seq, prior_input, input, dim=-1
         )  # Lags are added as an extra dim. Shape is (bsz, context_length+(pred_len-1), len(self.lags_seq))
 
+
+        # 静态特征处理：
+        # 从标准化过程中得到的位置参数 loc 和尺度参数 scale 被转换为静态特征（通过取绝对值的对数加1和取对数）。
+
         static_feat = torch.cat(
             (loc.abs().log1p(), scale.log()), dim=-1
         )  # (bsz, 2) (loc and scale are concatenated)
+        # 这些静态特征被扩展以匹配滞后序列的形状，然后作为模型输入的一部分。
         expanded_static_feat = unsqueeze_expand(
             static_feat, dim=-2, size=lags.shape[-2]
         )  # (bsz, context_length+(pred_len-1), 2)
         # expanded_static_feat: (bsz, context_length+(pred_len-1), len(self.lags_seq) + 2); (bsz, 1); (bsz, 1)
 
+        # 返回结果：
+        # 如果提供了时间特征，则将滞后序列、扩展后的静态特征和时间特征拼接起来，并返回这些特征、位置参数和尺度参数。
         if past_time_feat is not None:
             return (
                 torch.cat((lags, expanded_static_feat, time_feat), dim=-1),
@@ -524,6 +535,7 @@ class LagLlamaModel(nn.Module):
                 scale,
             )
         else:
+            #如果没有提供时间特征，则只返回滞后序列和扩展后的静态特征，以及位置参数和尺度参数。
             return torch.cat((lags, expanded_static_feat), dim=-1), loc, scale
 
     def forward(
