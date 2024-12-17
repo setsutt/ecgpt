@@ -167,7 +167,7 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
         # else:
         #     self.lags_seq = [] #如果lag_indices列表为空（即lags_seq没有生成任何滞后索引），则self.lags_seq被设置为空列表。
 
-        self.lags_seq = [0]
+        self.lags_seq = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,14,18,19,20]
 
         self.n_head = n_head
         self.n_layer = n_layer
